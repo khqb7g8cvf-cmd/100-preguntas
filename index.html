@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>100 Preguntas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#080608;--deep:#0f0d12;--surface:#17141c;--card:#1e1a26;
+  --border:rgba(255,255,255,0.07);--gold:#c9a84c;--gold2:#e8cc80;
+  --cream:#f5efe6;--muted:rgba(245,239,230,0.35);
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'DM Sans',system-ui,sans-serif;
+}
+html,body{min-height:100%;background:var(--black);color:var(--cream);font-family:var(--sans);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes cardOut{to{transform:translateX(70px) rotate(5deg) scale(0.9);opacity:0}}
+@keyframes cardIn{from{transform:translateX(-40px) scale(0.95);opacity:0}to{transform:none;opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{opacity:0.4}50%{opacity:0.8}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.fu{animation:fadeUp 0.5s cubic-bezier(.22,.68,0,1.1) both}
+.fi{animation:fadeIn 0.3s ease both}
+.su{animation:slideUp 0.4s cubic-bezier(.22,.68,0,1.1) both}
+.screen{min-height:100vh;display:flex;flex-direction:column}
+.center{align-items:center;justify-content:center;padding:40px 24px;text-align:center;position:relative;overflow:hidden}
+.divider{width:40px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:20px auto}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2),var(--gold));background-size:200% auto;color:var(--black);border:none;border-radius:100px;font-family:var(--sans);font-weight:600;font-size:13px;letter-spacing:0.5px;cursor:pointer;transition:all 0.3s;box-shadow:0 4px 24px rgba(201,168,76,0.35)}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(201,168,76,0.45)}
+.btn-gold:disabled{opacity:0.25;cursor:default;transform:none;box-shadow:none}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:100px;font-family:var(--sans);font-size:13px;cursor:pointer;transition:all 0.2s}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.2);color:var(--cream)}
+.prog-track{height:2px;background:rgba(255,255,255,0.06);border-radius:1px;flex:1}
+.prog-fill{height:100%;border-radius:1px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width 0.5s cubic-bezier(.22,.68,0,1.1)}
+.cat-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;border:1px solid}
+.toggle-wrap{display:flex;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:100px;padding:3px;gap:2px}
+.toggle-btn{padding:6px 14px;border-radius:100px;border:none;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;font-family:var(--sans)}
+.answer-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:16px;font-size:15px;line-height:1.65;resize:none;color:var(--cream);font-family:var(--sans);transition:border-color 0.2s;outline:none}
+.answer-input:focus{border-color:rgba(201,168,76,0.45);background:rgba(255,255,255,0.06)}
+.answer-input::placeholder{color:rgba(245,239,230,0.18)}
+.player-card{width:100%;padding:18px 22px;border-radius:16px;cursor:pointer;border:1px solid var(--border);background:var(--card);transition:all 0.25s;text-align:left;font-family:var(--sans)}
+.player-card:hover{border-color:rgba(201,168,76,0.4);transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,0.5)}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn 0.2s ease}
+.modal-sheet{width:100%;max-width:500px;background:var(--surface);border-radius:24px 24px 0 0;padding:28px 24px 52px;animation:slideUp 0.38s cubic-bezier(.22,.68,0,1.1);border-top:1px solid var(--border)}
+.list-item{border-bottom:1px solid var(--border);padding:16px 0}
+.list-item:last-child{border-bottom:none}
+.compare-block{border-radius:18px;padding:18px 20px;margin-bottom:12px;border:1px solid}
+.spinner{width:32px;height:32px;border:2px solid rgba(201,168,76,0.15);border-top-color:var(--gold);border-radius:50%;animation:spin 0.75s linear infinite;margin:0 auto}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+.topbar{padding:16px 20px 12px;display:flex;align-items:center;gap:12px;background:rgba(0,0,0,0.2);backdrop-filter:blur(20px);position:sticky;top:0;z-index:10}
+.back-btn{background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;line-height:1;transition:color 0.2s}
+.back-btn:hover{color:var(--cream)}
+input[type=password]{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px 16px;font-size:16px;color:var(--cream);font-family:var(--sans);outline:none;transition:border-color 0.2s;letter-spacing:3px;text-align:center}
+input[type=password]:focus{border-color:rgba(201,168,76,0.5)}
+input[type=password]::placeholder{letter-spacing:0;color:rgba(245,239,230,0.2)}
+.card-wrap{width:100%;max-width:420px;background:var(--card);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:32px 28px;box-shadow:0 32px 80px rgba(0,0,0,0.75),0 0 0 1px rgba(255,255,255,0.03),0 0 80px rgba(201,168,76,0.06);transition:box-shadow 0.4s}
+.card-out{animation:cardOut 0.22s cubic-bezier(.4,0,1,1) forwards}
+.card-in{animation:cardIn 0.36s cubic-bezier(.22,.68,0,1.2) forwards}
+.num-badge{font-family:var(--serif);font-size:11px;color:var(--muted);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px}
+.q-text{font-family:var(--serif);font-size:24px;line-height:1.55;color:var(--cream);font-weight:400;margin-bottom:28px;letter-spacing:-0.2px}
+.save-ind{font-size:11px;letter-spacing:0.5px;margin-top:10px;min-height:16px;transition:opacity 0.3s}
+.amb-glow{position:absolute;top:15%;left:50%;transform:translateX(-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(201,168,76,0.05) 0%,transparent 65%);pointer-events:none;animation:glow 4s ease-in-out infinite}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px 16px;text-align:center;min-width:110px}
+</style>
+</head>
+<body>
+<div id="app"><div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--black)"><div class="spinner"></div></div></div>
+<script>
+const SURL = 'https://aprtfxekhhbysezwyceo.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwcnRmeGVraGhieXNlend5Y2VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNTU1NjcsImV4cCI6MjA5MTgzMTU2N30.Ouqti7EkpASfAI2n0OHCX7CGDur039DuOHfxpRRGCJA';
+const PWD = { A:'corcho123', B:'mara123' };
+const PL  = { A:{name:'Corcho',color:'#c9a84c',glow:'rgba(201,168,76,0.3)'}, B:{name:'Mara',color:'#d4607a',glow:'rgba(212,96,122,0.3)'} };
+const CATS = ['Ligera','Profunda','Valores','Amor','Fun','Mente','Vida','Atrevida','Alma','Cierre'];
+const CM = {
+  Ligera:  {e:'🌱',l:'Ligeras',  c:'#4ade80',bg:'rgba(74,222,128,0.08)',  b:'rgba(74,222,128,0.22)'},
+  Profunda:{e:'🔥',l:'Profundas',c:'#f87171',bg:'rgba(248,113,113,0.08)', b:'rgba(248,113,113,0.22)'},
+  Valores: {e:'🧭',l:'Valores',  c:'#60a5fa',bg:'rgba(96,165,250,0.08)',  b:'rgba(96,165,250,0.22)'},
+  Amor:    {e:'💞',l:'Amor',     c:'#f0abfc',bg:'rgba(240,171,252,0.08)', b:'rgba(240,171,252,0.22)'},
+  Fun:     {e:'🎲',l:'Diversión',c:'#fbbf24',bg:'rgba(251,191,36,0.08)',  b:'rgba(251,191,36,0.22)'},
+  Mente:   {e:'🌍',l:'Mente',    c:'#818cf8',bg:'rgba(129,140,248,0.08)', b:'rgba(129,140,248,0.22)'},
+  Vida:    {e:'🏠',l:'Vida',     c:'#a78bfa',bg:'rgba(167,139,250,0.08)', b:'rgba(167,139,250,0.22)'},
+  Atrevida:{e:'💋',l:'Atrevidas',c:'#fb7185',bg:'rgba(251,113,133,0.08)', b:'rgba(251,113,133,0.28)'},
+  Alma:    {e:'🪞',l:'Alma',     c:'#34d399',bg:'rgba(52,211,153,0.08)',  b:'rgba(52,211,153,0.22)'},
+  Cierre:  {e:'🎯',l:'Cierre',   c:'#fb923c',bg:'rgba(251,146,60,0.08)',  b:'rgba(251,146,60,0.22)'},
+};
+const QS = [
+  {id:1,cat:'Ligera',text:'¿Cuál es tu memoria favorita de la infancia?'},
+  {id:2,cat:'Ligera',text:'¿Qué canción nunca te cansas de escuchar?'},
+  {id:3,cat:'Ligera',text:'¿Cuál sería tu comida para el último día de tu vida?'},
+  {id:4,cat:'Ligera',text:'¿Qué serie o película verías infinitas veces?'},
+  {id:5,cat:'Ligera',text:'¿A qué le tienes miedo que nadie se imagina?'},
+  {id:6,cat:'Ligera',text:'¿Cuál es tu guilty pleasure más ridículo?'},
+  {id:7,cat:'Ligera',text:'¿Prefieres playa o montaña, y por qué?'},
+  {id:8,cat:'Ligera',text:'¿Qué superpoder elegirías y para qué lo usarías realmente?'},
+  {id:9,cat:'Ligera',text:'¿Cuál es la cosa más estúpida que has hecho por amor o diversión?'},
+  {id:10,cat:'Ligera',text:'¿Madrugador o noctámbulo? ¿Siempre fue así?'},
+  {id:11,cat:'Profunda',text:'¿Qué es lo que más te cuesta trabajo perdonar?'},
+  {id:12,cat:'Profunda',text:'¿Cuál ha sido el momento más difícil de tu vida y qué aprendiste?'},
+  {id:13,cat:'Profunda',text:'¿Qué relación te formó más, para bien o para mal?'},
+  {id:14,cat:'Profunda',text:'¿Qué versión de ti ya no eres pero entiendes por qué existió?'},
+  {id:15,cat:'Profunda',text:'¿Cuándo fue la última vez que lloraste y por qué?'},
+  {id:16,cat:'Profunda',text:'¿Qué desearías que la gente entendiera de ti sin explicarlo?'},
+  {id:17,cat:'Profunda',text:'¿Qué decisión en tu vida cambió todo, aunque pareciera pequeña?'},
+  {id:18,cat:'Profunda',text:'¿De qué te arrepientes y de cuál no, aunque salió mal?'},
+  {id:19,cat:'Profunda',text:'¿Cuál es el mayor miedo que tienes sobre el futuro?'},
+  {id:20,cat:'Profunda',text:'¿Qué parte de tu personalidad te costó más trabajo aceptar?'},
+  {id:21,cat:'Valores',text:'¿Cómo defines el éxito para ti hoy, no el que te enseñaron?'},
+  {id:22,cat:'Valores',text:'¿En qué nunca cederías sin importar la presión?'},
+  {id:23,cat:'Valores',text:'¿Cómo te imaginas tu vida en 10 años, en serio?'},
+  {id:24,cat:'Valores',text:'¿Qué papel juega la religión o espiritualidad en tu vida?'},
+  {id:25,cat:'Valores',text:'¿Dinero, tiempo o reconocimiento? ¿Qué priorizas y por qué?'},
+  {id:26,cat:'Valores',text:'¿Qué opinas de tener hijos? ¿Lo quieres, dudas, o ya decidiste?'},
+  {id:27,cat:'Valores',text:'¿Cómo sabes que alguien es buena persona, más allá de lo que dice?'},
+  {id:28,cat:'Valores',text:'¿Qué tan importante es vivir cerca de tu familia?'},
+  {id:29,cat:'Valores',text:'¿Qué opinas de la lealtad, dónde pones el límite?'},
+  {id:30,cat:'Valores',text:'¿Qué mundo quisieras dejarle a la gente que viene después de ti?'},
+  {id:31,cat:'Amor',text:'¿Qué aprendiste de relaciones pasadas que cambió cómo amas?'},
+  {id:32,cat:'Amor',text:'¿Cómo sabes que estás enamorado/a de alguien?'},
+  {id:33,cat:'Amor',text:'¿Qué necesitas de una pareja para sentirte seguro/a?'},
+  {id:34,cat:'Amor',text:'¿Qué es para ti infidelidad? ¿Solo lo físico o hay más?'},
+  {id:35,cat:'Amor',text:'¿Cómo peleas? ¿Te cierras, explotas, o hablas?'},
+  {id:36,cat:'Amor',text:'¿Qué detalle pequeño de una pareja te enamora más que un gesto grande?'},
+  {id:37,cat:'Amor',text:'¿Cuánto espacio necesitas dentro de una relación?'},
+  {id:38,cat:'Amor',text:'¿Qué es lo que más te cuesta dentro de una relación?'},
+  {id:39,cat:'Amor',text:'¿Qué hace irresistible a alguien más allá del físico?'},
+  {id:40,cat:'Amor',text:'¿Cómo sabes cuándo una relación ya no tiene futuro?'},
+  {id:41,cat:'Fun',text:'¿Cuál es tu teoría más random sobre cómo funciona el mundo?'},
+  {id:42,cat:'Fun',text:'¿Si pudieras cenar con cualquier persona, quién sería y qué le preguntarías?'},
+  {id:43,cat:'Fun',text:'¿Qué habilidad inútil tienes que te enorgullece secretamente?'},
+  {id:44,cat:'Fun',text:'¿Cuál es la mentira más creativa que has dicho para salirte de algo?'},
+  {id:45,cat:'Fun',text:'¿Animal que serías y por qué, siendo honesto/a?'},
+  {id:46,cat:'Fun',text:'¿Cuál es tu opinión más impopular que defiendes con todo?'},
+  {id:47,cat:'Fun',text:'¿Qué harías si te ganas la lotería mañana, sin filtro?'},
+  {id:48,cat:'Fun',text:'¿Cuál es el peor consejo que te dieron y te lo tomaste en serio?'},
+  {id:49,cat:'Fun',text:'¿Si tu vida fuera una película, qué género sería y quién la protagonizaría?'},
+  {id:50,cat:'Fun',text:'¿Cuál es tu momento más vergonzoso que ya te da risa?'},
+  {id:51,cat:'Mente',text:'¿Qué tema podrías hablar horas sin cansarte?'},
+  {id:52,cat:'Mente',text:'¿Qué libro, película o experiencia cambió tu forma de ver algo?'},
+  {id:53,cat:'Mente',text:'¿Cuál es una creencia que tenías y que tuviste que soltar?'},
+  {id:54,cat:'Mente',text:'¿Qué país o cultura te llama más y por qué?'},
+  {id:55,cat:'Mente',text:'¿Crees que el mundo está mejorando o empeorando? ¿Por qué?'},
+  {id:56,cat:'Mente',text:'¿Qué le cambiarías a México si pudieras?'},
+  {id:57,cat:'Mente',text:'¿Qué te genera más curiosidad: el universo, la ciencia, o la existencia?'},
+  {id:58,cat:'Mente',text:'¿Qué cosa del mundo moderno veremos en 50 años como barbarismo?'},
+  {id:59,cat:'Mente',text:'¿Hay algo que sabes racionalmente pero emocionalmente no puedes aceptar?'},
+  {id:60,cat:'Mente',text:'¿En qué época de la historia te hubiera gustado vivir, y en cuál jamás?'},
+  {id:61,cat:'Vida',text:'¿Cómo es tu mañana ideal, la que no tienes que planear para nadie?'},
+  {id:62,cat:'Vida',text:'¿Eres más de planes o más de improvisar?'},
+  {id:63,cat:'Vida',text:'¿Cómo manejas el estrés cuando de verdad te llega?'},
+  {id:64,cat:'Vida',text:'¿Qué necesitas para recargar energía: soledad, gente, o depende?'},
+  {id:65,cat:'Vida',text:'¿Qué es lo que más valoras de tu rutina actual?'},
+  {id:66,cat:'Vida',text:'¿Cómo es tu relación con el dinero: ansioso/a, relajado/a, obsesivo/a?'},
+  {id:67,cat:'Vida',text:'¿Qué hábito tuyo sabes que deberías cambiar pero no quieres?'},
+  {id:68,cat:'Vida',text:'¿Cómo describirías tu círculo social: íntimo o amplio?'},
+  {id:69,cat:'Vida',text:'¿Qué cosa que haces solo/a disfrutas pero te da algo de pena admitir?'},
+  {id:70,cat:'Vida',text:'¿Qué estás aprendiendo o queriendo aprender ahora mismo?'},
+  {id:71,cat:'Atrevida',text:'¿Qué es lo que más te gusta que te hagan y que pocas personas saben?'},
+  {id:72,cat:'Atrevida',text:'¿Cuándo fue la primera vez que de verdad sentiste atracción por alguien?'},
+  {id:73,cat:'Atrevida',text:'¿Hay algo que quieras probar pero nunca has tenido con quién?'},
+  {id:74,cat:'Atrevida',text:'¿Cuál ha sido tu fantasía más recurrente que no le has contado a nadie?'},
+  {id:75,cat:'Atrevida',text:'¿Qué te bloquea más en la intimidad: la cabeza, el cuerpo o el contexto?'},
+  {id:76,cat:'Atrevida',text:'¿Qué hace a alguien increíble en la cama más allá de lo técnico?'},
+  {id:77,cat:'Atrevida',text:'¿Seducción rápida e intensa, o lenta y acumulada? ¿Por qué?'},
+  {id:78,cat:'Atrevida',text:'¿Qué palabra o frase en el momento exacto puede desarmarte completamente?'},
+  {id:79,cat:'Atrevida',text:'¿Qué fue lo más espontáneo y loco que hiciste con alguien que te gustaba?'},
+  {id:80,cat:'Atrevida',text:'¿Hay algo que antes te daba pena y ahora pides sin problema?'},
+  {id:81,cat:'Alma',text:'¿Cómo crees que te percibe la gente vs cómo eres en realidad?'},
+  {id:82,cat:'Alma',text:'¿Cuándo fue la última vez que te sorprendiste a ti mismo/a?'},
+  {id:83,cat:'Alma',text:'¿Qué rasgo tuyo te costó más trabajo amar?'},
+  {id:84,cat:'Alma',text:'¿Hay algo que sientes que todavía no has resuelto contigo mismo/a?'},
+  {id:85,cat:'Alma',text:'¿Qué te da paz de verdad, no lo que se supone que debería dártela?'},
+  {id:86,cat:'Alma',text:'¿Cuándo te sientes más tú mismo/a?'},
+  {id:87,cat:'Alma',text:'¿Qué parte de ti quisieras que la gente viera más?'},
+  {id:88,cat:'Alma',text:'¿En qué te pareces a tu familia más de lo que quisieras?'},
+  {id:89,cat:'Alma',text:'¿Si pudieras darle un consejo a tu yo de 15 años, qué sería?'},
+  {id:90,cat:'Alma',text:'¿Qué significa para ti tener una vida bien vivida?'},
+  {id:91,cat:'Cierre',text:'¿Qué pregunta nunca te han hecho y desearías que alguien te hiciera?'},
+  {id:92,cat:'Cierre',text:'¿Qué quisieras que yo supiera de ti que todavía no sé?'},
+  {id:93,cat:'Cierre',text:'¿Qué esperas de esta relación, sin filtros?'},
+  {id:94,cat:'Cierre',text:'¿Hay algo que te da miedo que yo descubra de ti?'},
+  {id:95,cat:'Cierre',text:'¿Qué cosa hice o dijiste en estos dos meses que te gustó más?'},
+  {id:96,cat:'Cierre',text:'¿Qué quieres que nunca cambie entre nosotros?'},
+  {id:97,cat:'Cierre',text:'¿Hay algo que hayas querido preguntarme y no te has animado?'},
+  {id:98,cat:'Cierre',text:'¿Cómo describirías lo que hay entre nosotros a alguien que no nos conoce?'},
+  {id:99,cat:'Cierre',text:'¿Qué es lo más bonito que te ha pasado en los últimos meses?'},
+  {id:100,cat:'Cierre',text:'¿Qué sientes ahorita mismo?'},
+];
+
+// ── Supabase ──────────────────────────────────────────────────────────────────
+const sb = supabase.createClient(SURL, SKEY);
+
+// ── State ─────────────────────────────────────────────────────────────────────
+// answers: { A: {1:'resp', 2:'resp'...}, B: {...} }
+// currentQId: the EXACT question id being shown right now
+let S = {
+  screen: 'login',
+  player: null,
+  answers: {A:{}, B:{}},
+  currentQId: null,   // always tracks exact question id, never an index
+  anim: '',           // '' | 'out' | 'in'
+  viewMode: 'card',
+  expandedCat: null,
+  compareIdx: 0,
+  loginPlayer: null,
+  loginError: '',
+  modalQId: null,
+};
+
+function set(patch){ Object.assign(S, patch); render(); }
+
+// ── DB ────────────────────────────────────────────────────────────────────────
+async function dbLoad(){
+  try {
+    const { data } = await sb.from('answers').select('*');
+    const a = {A:{}, B:{}};
+    (data||[]).forEach(r => { if(a[r.player]) a[r.player][r.question_id] = r.answer; });
+    // Set currentQId to first pending question after load
+    const pending = firstPending(a[S.player]||{});
+    set({ answers:a, currentQId: pending ? pending.id : null });
+  } catch(e){ console.error(e); }
+}
+
+async function dbSave(qid, text){
+  if(!text.trim()) return;
+  // Update local silently
+  if(!S.answers[S.player]) S.answers[S.player] = {};
+  S.answers[S.player][qid] = text.trim();
+  // Persist
+  try {
+    await sb.from('answers').upsert(
+      { player:S.player, question_id:qid, answer:text.trim() },
+      { onConflict:'player,question_id' }
+    );
+  } catch(e){ console.error(e); }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function myA(){ return S.answers[S.player]||{}; }
+function firstPending(answered){ return QS.find(q => !answered[q.id]) || null; }
+function pending(){ return QS.filter(q => !myA()[q.id]); }
+function pct(){ return Math.round((Object.keys(myA()).length/100)*100); }
+function bothA(){ return QS.filter(q => S.answers.A?.[q.id] && S.answers.B?.[q.id]); }
+function getCurQ(){ return QS.find(q=>q.id===S.currentQId) || null; }
+
+// ── Next question (strict: by id, not index) ──────────────────────────────────
+function advance(skip){
+  const cur = getCurQ();
+  if(!cur) return;
+  if(!skip && !myA()[cur.id]?.trim()) return;
+  set({ anim:'out' });
+  setTimeout(()=>{
+    // Find next pending question AFTER current one by id
+    const remaining = QS.filter(q => !myA()[q.id] && q.id !== cur.id);
+    const next = remaining[0] || null;
+    set({ currentQId: next ? next.id : null, anim:'in' });
+    setTimeout(()=>set({ anim:'' }), 300);
+  }, 230);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(){
+  document.getElementById('app').innerHTML = html();
+  bind();
+}
+
+function html(){
+  switch(S.screen){
+    case 'login':   return rLogin();
+    case 'intro':   return rIntro();
+    case 'answer':  return rAnswer();
+    case 'compare': return rCompare();
+    default: return '';
+  }
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+function rLogin(){
+  const p = S.loginPlayer;
+  const pl = p ? PL[p] : null;
+  return `<div class="screen center fi" style="background:var(--black)">
+  <div class="amb-glow"></div>
+  <div class="fu" style="margin-bottom:48px">
+    <p style="font-size:10px;letter-spacing:5px;color:var(--gold);text-transform:uppercase;margin-bottom:20px;opacity:0.65">Corcho × Mara</p>
+    <h1 style="font-family:var(--serif);font-size:64px;font-weight:300;line-height:1.0;color:var(--cream);margin-bottom:6px">100</h1>
+    <h1 style="font-family:var(--serif);font-size:64px;font-weight:300;line-height:1.0">
+      <em style="background:linear-gradient(135deg,var(--gold),var(--gold2),#fff8e7,var(--gold));background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s linear infinite">Preguntas</em>
+    </h1>
+    <div class="divider" style="margin:28px auto"></div>
+
+    <!-- Player names -->
+    <div style="display:flex;align-items:center;gap:20px;justify-content:center;margin-bottom:32px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:7px;height:7px;border-radius:50%;background:#c9a84c;box-shadow:0 0 10px rgba(201,168,76,0.6);animation:glow 2s ease-in-out infinite"></div>
+        <span style="font-family:var(--serif);font-size:18px;font-style:italic;color:#c9a84c">Corcho</span>
+      </div>
+      <span style="color:var(--border);font-size:18px">×</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:7px;height:7px;border-radius:50%;background:#d4607a;box-shadow:0 0 10px rgba(212,96,122,0.6);animation:glow 2s ease-in-out infinite 0.5s"></div>
+        <span style="font-family:var(--serif);font-size:18px;font-style:italic;color:#d4607a">Mara</span>
+      </div>
+    </div>
+
+    <!-- Category emoji marquee -->
+    <div style="width:100%;overflow:hidden;margin-bottom:40px;mask-image:linear-gradient(90deg,transparent,black 15%,black 85%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,black 15%,black 85%,transparent)">
+      <div style="display:flex;gap:28px;width:max-content;animation:marquee 12s linear infinite">
+        <span style="font-size:22px">🌱</span><span style="font-size:22px">🔥</span><span style="font-size:22px">🧭</span><span style="font-size:22px">💞</span><span style="font-size:22px">🎲</span><span style="font-size:22px">🌍</span><span style="font-size:22px">🏠</span><span style="font-size:22px">💋</span><span style="font-size:22px">🪞</span><span style="font-size:22px">🎯</span>
+        <span style="font-size:22px">🌱</span><span style="font-size:22px">🔥</span><span style="font-size:22px">🧭</span><span style="font-size:22px">💞</span><span style="font-size:22px">🎲</span><span style="font-size:22px">🌍</span><span style="font-size:22px">🏠</span><span style="font-size:22px">💋</span><span style="font-size:22px">🪞</span><span style="font-size:22px">🎯</span>
+        <span style="font-size:22px">🌱</span><span style="font-size:22px">🔥</span><span style="font-size:22px">🧭</span><span style="font-size:22px">💞</span><span style="font-size:22px">🎲</span><span style="font-size:22px">🌍</span><span style="font-size:22px">🏠</span><span style="font-size:22px">💋</span><span style="font-size:22px">🪞</span><span style="font-size:22px">🎯</span>
+        <span style="font-size:22px">🌱</span><span style="font-size:22px">🔥</span><span style="font-size:22px">🧭</span><span style="font-size:22px">💞</span><span style="font-size:22px">🎲</span><span style="font-size:22px">🌍</span><span style="font-size:22px">🏠</span><span style="font-size:22px">💋</span><span style="font-size:22px">🪞</span><span style="font-size:22px">🎯</span>
+      </div>
+    </div>
+
+  </div>
+  ${!p ? `
+  <div class="fu" style="width:100%;max-width:300px;animation-delay:.12s">
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px;letter-spacing:0.3px">¿Quién eres?</p>
+    ${['A','B'].map(k=>`
+    <button class="player-card" style="margin-bottom:10px" data-a="pick" data-p="${k}">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:38px;height:38px;border-radius:50%;background:${PL[k].color}15;border:1.5px solid ${PL[k].color}45;display:flex;align-items:center;justify-content:center">
+          <span style="font-family:var(--serif);font-size:17px;color:${PL[k].color}">${PL[k].name[0]}</span>
+        </div>
+        <span style="font-family:var(--serif);font-size:19px;color:var(--cream);font-weight:400">${PL[k].name}</span>
+        <span style="margin-left:auto;color:var(--muted);font-size:12px">→</span>
+      </div>
+    </button>`).join('')}
+  </div>` : `
+  <div class="fu" style="width:100%;max-width:300px;animation-delay:.1s">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center">
+      <div style="width:8px;height:8px;border-radius:50%;background:${pl.color};box-shadow:0 0 12px ${pl.glow}"></div>
+      <span style="font-family:var(--serif);font-size:20px;color:${pl.color};font-style:italic">${pl.name}</span>
+    </div>
+    <input type="password" id="pwd" placeholder="contraseña" autocomplete="off" autofocus/>
+    ${S.loginError?`<p style="color:#f87171;font-size:12px;text-align:center;margin-top:10px">${S.loginError}</p>`:''}
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn-ghost" data-a="back" style="flex:1;padding:13px 0">← Atrás</button>
+      <button class="btn-gold" data-a="login" style="flex:2;padding:14px 0">Entrar</button>
+    </div>
+  </div>`}
+</div>`;
+}
+
+// ── INTRO ─────────────────────────────────────────────────────────────────────
+function rIntro(){
+  const both = bothA();
+  return `<div class="screen center fi" style="background:var(--black)">
+  <div class="amb-glow"></div>
+  <div class="fu" style="margin-bottom:40px">
+    <p style="font-size:10px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:18px;opacity:0.75">Corcho × Mara</p>
+    <h1 style="font-family:var(--serif);font-size:52px;font-weight:300;line-height:1.1;color:var(--cream)">100<br><em style="background:linear-gradient(135deg,var(--gold),var(--gold2),#fff8e7,var(--gold));background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 4s linear infinite">Preguntas</em></h1>
+    <div class="divider"></div>
+    <p style="color:var(--muted);font-size:14px;line-height:1.75;max-width:240px;margin:0 auto">Cada quien contesta por su lado.<br/>Se comparan juntos al final.</p>
+  </div>
+  <div class="fu" style="display:flex;gap:14px;margin-bottom:32px;animation-delay:.1s">
+    ${['A','B'].map(k=>{
+      const cnt = Object.keys(S.answers[k]||{}).length;
+      return `<div class="stat-card">
+        <div style="width:46px;height:46px;border-radius:50%;margin:0 auto 10px;background:${PL[k].color}14;border:1.5px solid ${PL[k].color}45;display:flex;align-items:center;justify-content:center">
+          <span style="font-family:var(--serif);font-size:19px;color:${PL[k].color}">${cnt}</span>
+        </div>
+        <p style="font-size:13px;font-weight:500;color:var(--cream);margin-bottom:4px">${PL[k].name}</p>
+        <p style="font-size:11px;color:var(--muted)">${cnt}/100</p>
+        <div class="prog-track" style="margin-top:10px"><div class="prog-fill" style="width:${cnt}%;background:linear-gradient(90deg,${PL[k].color},${PL[k].color}88)"></div></div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="fu" style="width:100%;max-width:300px;display:flex;flex-direction:column;gap:10px;animation-delay:.2s">
+    <button class="btn-gold" data-a="go-answer" style="padding:15px;font-size:14px">Contestar →</button>
+    ${both.length?`<button class="btn-ghost" data-a="go-compare" style="padding:13px;border-color:rgba(201,168,76,0.35);color:var(--gold)">✦ Ver respuestas juntos · ${both.length}</button>`:''}
+    <button class="btn-ghost" data-a="logout" style="padding:11px;font-size:12px;margin-top:4px">Cerrar sesión</button>
+  </div>
+</div>`;
+}
+
+// ── ANSWER ────────────────────────────────────────────────────────────────────
+function rAnswer(){
+  const pl = PL[S.player];
+  const pend = pending();
+  if(!pend.length) return `<div class="screen center fi" style="background:var(--black)">
+    <div class="amb-glow"></div>
+    <p style="font-size:52px;margin-bottom:16px">✦</p>
+    <h2 style="font-family:var(--serif);font-size:34px;font-weight:300;color:var(--cream);margin-bottom:12px">Listo, ${pl.name}</h2>
+    <p style="color:var(--muted);font-size:14px;max-width:240px;line-height:1.75;margin-bottom:32px">Contestaste las 100. Espera a que ${S.player==='A'?PL.B.name:PL.A.name} termine para revelarlas juntos.</p>
+    <button class="btn-gold" data-a="go-intro" style="padding:14px 36px">Volver al inicio</button>
+  </div>`;
+
+  const cur = getCurQ();
+  if(!cur) return rAnswer_done();
+  const m = CM[cur.cat]||{};
+  const savedVal = myA()[cur.id]||'';
+  const animClass = S.anim==='out'?'card-out':S.anim==='in'?'card-in':'';
+
+  return `<div class="screen fi" style="background:var(--deep)">
+  <div class="topbar">
+    <button class="back-btn" data-a="go-intro">←</button>
+    <div class="prog-track"><div class="prog-fill" style="width:${pct()}%"></div></div>
+    <span style="font-size:11px;color:var(--muted);letter-spacing:.5px;white-space:nowrap">${Object.keys(myA()).length} / 100</span>
+    <div class="toggle-wrap">
+      <button class="toggle-btn" data-a="view-card" style="background:${S.viewMode==='card'?pl.color:'transparent'};color:${S.viewMode==='card'?'var(--black)':'var(--muted)'}">Carta</button>
+      <button class="toggle-btn" data-a="view-list" style="background:${S.viewMode==='list'?pl.color:'transparent'};color:${S.viewMode==='list'?'var(--black)':'var(--muted)'}">Lista</button>
+    </div>
+  </div>
+  <div style="padding:0 20px 14px;display:flex;align-items:center;gap:8px">
+    <div style="width:7px;height:7px;border-radius:50%;background:${pl.color};box-shadow:0 0 10px ${pl.glow};animation:glow 2s ease-in-out infinite"></div>
+    <span style="font-family:var(--serif);font-size:15px;color:${pl.color};font-style:italic;opacity:0.8">${pl.name}</span>
+    <span style="margin-left:auto;font-size:11px;color:var(--muted);letter-spacing:0.5px">${pend.length} pendientes</span>
+  </div>
+
+  ${S.viewMode==='card'?`
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 20px 12px">
+    <div class="card-wrap ${animClass}" id="the-card">
+      <span class="cat-pill" style="color:${m.c};background:${m.bg};border-color:${m.b};margin-bottom:22px">${m.e} ${m.l}</span>
+      <p class="num-badge">${cur.id} <span style="opacity:0.35">/ 100</span></p>
+      <p class="q-text">${cur.text}</p>
+      <textarea class="answer-input" id="ans-ta" rows="3" placeholder="Tu respuesta..." data-qid="${cur.id}">${savedVal}</textarea>
+      <p class="save-ind" id="save-ind" style="color:${pl.color};opacity:${savedVal?1:0}">${savedVal?'✓ guardado':''}</p>
+    </div>
+  </div>
+  <div style="padding:0 20px 40px;display:flex;gap:10px">
+    <button class="btn-ghost" data-a="skip" style="flex:1;padding:14px 0">Saltar</button>
+    <button class="btn-gold" data-a="next" id="next-btn" style="flex:2;padding:14px 0" ${!savedVal?'disabled':''}>Siguiente →</button>
+  </div>`
+
+  :`<div style="flex:1;overflow-y:auto;padding:0 16px 48px">
+    ${CATS.map(cat=>{
+      const cqs = pend.filter(q=>q.cat===cat);
+      if(!cqs.length) return '';
+      const m2 = CM[cat]||{};
+      const open = S.expandedCat===cat;
+      return `<div style="margin-bottom:8px">
+        <button data-a="toggle-cat" data-cat="${cat}" style="width:100%;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;background:${open?'var(--card)':'rgba(255,255,255,0.02)'};border:1px solid ${open?m2.b:'var(--border)'};border-radius:${open?'16px 16px 0 0':'16px'};cursor:pointer;font-family:var(--sans)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">${m2.e}</span>
+            <span style="font-family:var(--serif);font-size:17px;color:var(--cream)">${m2.l}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:${m2.c};background:${m2.bg};border:1px solid ${m2.b};padding:2px 10px;border-radius:100px">${cqs.length}</span>
+            <span style="color:var(--muted);font-size:12px">${open?'▲':'▼'}</span>
+          </div>
+        </button>
+        ${open?`<div style="background:var(--card);border:1px solid ${m2.b};border-top:none;border-radius:0 0 16px 16px;padding:4px 18px 14px">
+          ${cqs.map(q=>`<div class="list-item">
+            <p style="font-family:var(--serif);font-size:16px;line-height:1.55;color:var(--cream);margin-bottom:10px">${q.text}</p>
+            <button data-a="open-modal" data-qid="${q.id}" style="padding:7px 16px;background:${m2.bg};border:1px solid ${m2.b};border-radius:100px;font-size:12px;color:${m2.c};cursor:pointer;font-family:var(--sans)">
+              ${myA()[q.id]?'✓ Editar':'+ Contestar'}
+            </button>
+            ${myA()[q.id]?`<p style="margin-top:8px;font-size:13px;color:var(--muted);font-style:italic;line-height:1.5">"${myA()[q.id].length>90?myA()[q.id].slice(0,90)+'…':myA()[q.id]}"</p>`:''}
+          </div>`).join('')}
+        </div>`:''}
+      </div>`;
+    }).join('')}
+  </div>`}
+
+  ${S.modalQId ? rModal() : ''}
+</div>`;
+}
+
+function rModal(){
+  const q = QS.find(x=>x.id===S.modalQId);
+  if(!q) return '';
+  const m = CM[q.cat]||{};
+  const pl = PL[S.player];
+  return `<div class="modal-back" id="modal-back">
+    <div class="modal-sheet">
+      <div style="width:36px;height:3px;background:rgba(255,255,255,0.12);border-radius:2px;margin:0 auto 24px"></div>
+      <span class="cat-pill" style="color:${m.c};background:${m.bg};border-color:${m.b};margin-bottom:18px;display:inline-flex">${m.e} ${m.l}</span>
+      <p style="font-family:var(--serif);font-size:21px;line-height:1.5;color:var(--cream);margin-bottom:20px">${q.text}</p>
+      <textarea class="answer-input" id="modal-ta" rows="4" placeholder="Tu respuesta...">${myA()[q.id]||''}</textarea>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn-ghost" data-a="close-modal" style="flex:1;padding:13px 0">Cancelar</button>
+        <button class="btn-gold" data-a="save-modal" style="flex:2;padding:14px 0">Guardar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── COMPARE ───────────────────────────────────────────────────────────────────
+function rCompare(){
+  const both = bothA();
+  if(!both.length) return `<div class="screen center fi" style="background:var(--black)">
+    <p style="color:var(--muted)">Todavía no hay preguntas que ambos hayan respondido.</p>
+    <button class="btn-ghost" data-a="go-intro" style="margin-top:24px;padding:12px 28px">← Atrás</button>
+  </div>`;
+  const q = both[S.compareIdx];
+  const m = CM[q.cat]||{};
+  return `<div class="screen fi" style="background:var(--deep)">
+  <div class="topbar">
+    <button class="back-btn" data-a="go-intro">←</button>
+    <div class="prog-track"><div class="prog-fill" style="width:${((S.compareIdx+1)/both.length)*100}%"></div></div>
+    <span style="font-size:11px;color:var(--muted);letter-spacing:.5px">${S.compareIdx+1} / ${both.length}</span>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:12px 20px 16px">
+    <div style="max-width:440px;margin:0 auto">
+      <div style="background:var(--card);border:1px solid ${m.b||'var(--border)'};border-radius:22px;padding:24px;margin-bottom:16px">
+        <span class="cat-pill" style="color:${m.c};background:${m.bg};border-color:${m.b};margin-bottom:18px;display:inline-flex">${m.e} ${m.l}</span>
+        <p style="font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;font-family:var(--sans)">№ ${q.id}</p>
+        <p style="font-family:var(--serif);font-size:22px;line-height:1.5;color:var(--cream);font-weight:400">${q.text}</p>
+      </div>
+      ${['A','B'].map(k=>`
+      <div class="compare-block" style="background:${PL[k].color}08;border-color:${PL[k].color}28">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <div style="width:9px;height:9px;border-radius:50%;background:${PL[k].color};box-shadow:0 0 12px ${PL[k].glow}"></div>
+          <span style="font-family:var(--serif);font-size:16px;color:${PL[k].color};font-style:italic">${PL[k].name}</span>
+        </div>
+        <p style="font-family:var(--serif);font-size:19px;line-height:1.7;color:var(--cream);font-weight:400">
+          ${S.answers[k]?.[q.id]||'<span style="opacity:0.25;font-size:15px">Sin respuesta</span>'}
+        </p>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div style="padding:8px 20px 40px;display:flex;gap:10px">
+    <button class="btn-ghost" data-a="prev-cmp" style="flex:1;padding:14px 0" ${S.compareIdx===0?'disabled':''}>← Anterior</button>
+    <button class="btn-gold" data-a="next-cmp" style="flex:2;padding:14px 0" ${S.compareIdx>=both.length-1?'disabled':''}>Siguiente →</button>
+  </div>
+</div>`;
+}
+
+// ── Event binding ─────────────────────────────────────────────────────────────
+let saveTimer = null;
+
+function bind(){
+  // Delegation on app div
+  document.getElementById('app').onclick = e => {
+    let el = e.target;
+    while(el && el.id !== 'app'){
+      if(el.dataset && el.dataset.a) { act(el.dataset.a, el.dataset); return; }
+      el = el.parentElement;
+    }
+  };
+
+  // Textarea in card - safe autosave, never triggers re-render
+  const ta = document.getElementById('ans-ta');
+  if(ta){
+    const qid = parseInt(ta.dataset.qid);
+    ta.oninput = e => {
+      clearTimeout(saveTimer);
+      const val = e.target.value;
+      // Update local state silently
+      if(!S.answers[S.player]) S.answers[S.player] = {};
+      S.answers[S.player][qid] = val;
+      // Update UI elements directly without re-render
+      const ind = document.getElementById('save-ind');
+      const btn = document.getElementById('next-btn');
+      if(ind){ ind.textContent = val.trim()?'✓ guardado':''; ind.style.opacity = val.trim()?'1':'0'; }
+      if(btn) btn.disabled = !val.trim();
+      // Debounced Supabase save
+      saveTimer = setTimeout(()=>dbSave(qid, val), 1200);
+    };
+  }
+
+  // Modal backdrop close
+  const mb = document.getElementById('modal-back');
+  if(mb) mb.onclick = e => { if(e.target===mb) set({modalQId:null}); };
+
+  // Password enter key
+  const pw = document.getElementById('pwd');
+  if(pw) pw.onkeydown = e => { if(e.key==='Enter') act('login', {}); };
+}
+
+async function act(a, d){
+  switch(a){
+    case 'pick': set({loginPlayer:d.p, loginError:''}); break;
+    case 'back': set({loginPlayer:null, loginError:''}); break;
+    case 'login': {
+      const v = document.getElementById('pwd')?.value||'';
+      if(v===PWD[S.loginPlayer]){
+        set({player:S.loginPlayer, screen:'intro', loginError:''});
+        dbLoad();
+      } else set({loginError:'Contraseña incorrecta'});
+      break;
+    }
+    case 'logout': set({screen:'login',player:null,loginPlayer:null,loginError:'',currentQId:null}); break;
+    case 'go-intro': set({screen:'intro'}); break;
+    case 'go-answer': {
+      const p = pending();
+      set({screen:'answer', viewMode:'card', currentQId: p[0]?.id||null, expandedCat:null});
+      break;
+    }
+    case 'go-compare': set({screen:'compare', compareIdx:0}); break;
+    case 'view-card': set({viewMode:'card'}); break;
+    case 'view-list': set({viewMode:'list'}); break;
+    case 'skip': advance(true); break;
+    case 'next': {
+      const cur = getCurQ();
+      if(!cur) break;
+      // Save current textarea value first
+      const ta = document.getElementById('ans-ta');
+      if(ta && ta.value.trim()) await dbSave(cur.id, ta.value);
+      advance(false);
+      break;
+    }
+    case 'toggle-cat': set({expandedCat: S.expandedCat===d.cat?null:d.cat}); break;
+    case 'open-modal': set({modalQId:parseInt(d.qid)}); break;
+    case 'close-modal': set({modalQId:null}); break;
+    case 'save-modal': {
+      const v = document.getElementById('modal-ta')?.value||'';
+      if(v.trim()){ await dbSave(S.modalQId, v); set({modalQId:null}); }
+      break;
+    }
+    case 'prev-cmp': set({compareIdx:Math.max(0,S.compareIdx-1)}); break;
+    case 'next-cmp': set({compareIdx:Math.min(bothA().length-1,S.compareIdx+1)}); break;
+  }
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
